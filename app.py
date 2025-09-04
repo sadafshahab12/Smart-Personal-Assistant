@@ -1,6 +1,11 @@
 import datetime
 import os
 import random
+import requests
+import sqlite3
+from dotenv import load_dotenv
+
+load_dotenv()
 
 ASSISTANT_NAME = "smart personal assistant"
 TASK_FILE = "todo_task.txt"
@@ -24,7 +29,9 @@ def show_menu():
     print("2. Tell me a joke")
     print("3. Show Current Time")
     print("4. To-Do List")
-    print("5. Exit")
+    print("5. Get Weather Info")
+    print("6. Login/Signup")
+    print("7. Exit")
 
 
 def calculator():
@@ -114,6 +121,10 @@ def run_assistant():
         elif choice == "4":
             todo_menu()
         elif choice == "5":
+            city = input("Enter city name: ")
+            get_weather(city)
+
+        elif choice == "6":
             print("Goodbye! Have a great day!")
             break
 
@@ -121,4 +132,79 @@ def run_assistant():
             print("Invalid choice, try again.")
 
 
-run_assistant()
+def get_weather(city):
+    BASE_URL = os.getenv("BASE_URL")
+    API_KEY = os.getenv("API_KEY")
+    url = BASE_URL + "appid=" + API_KEY + "&q=" + city + "&units=metric"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        main = data["main"]
+        weather = data["weather"][0]["description"]
+        temperature = main["temp"]
+        print(f"Weather in {city} : {weather} , {temperature}C")
+
+    else:
+        print("City Not Found")
+
+
+def init_db():
+    conn = sqlite3.connect("assistant.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        """ CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT NOT NULL)"""
+    )
+    conn.commit()
+    conn.close()
+
+
+def sign_up(username, password):
+    conn = sqlite3.connect("assistant.db")
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, password) VALUES (?,?)", (username, password)
+        )
+        conn.commit()
+        print("User registered successfully.")
+    except sqlite3.IntegrityError:
+        print("Username already exists. Try a different one.")
+
+    conn.close()
+
+
+def login(username, password):
+    conn = sqlite3.connect("assistant.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM users WHERE username=? AND password=?", (username, password)
+    )
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        print(f"Welcome back, {username}")
+        return True
+    else:
+        print("Invalid credentials, try again.")
+        return False
+
+
+if __name__ == "__main__":
+    init_db()
+    print("Welcome to the Smart Personal Assistant")
+    print("1.Signup")
+    print("2.Login")
+
+    choice = input("Choose an option 1 or 2: ")
+    if choice == "1":
+        username = input("Enter a username: ")
+        password = input("Enter a password: ")
+        sign_up(username, password)
+    elif choice == "2":
+        username = input("Enter your username: ")
+        password = input("Enter your password: ")
+        if login(username, password):
+            run_assistant()
+        else:
+            print("Exiting the program.")
