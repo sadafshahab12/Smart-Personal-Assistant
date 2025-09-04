@@ -3,6 +3,7 @@ import os
 import random
 
 ASSISTANT_NAME = "smart personal assistant"
+TASK_FILE = "todo_task.txt"
 
 
 def greet_user():
@@ -21,19 +22,21 @@ def show_menu():
     print("\n --- Main Menu --- \n")
     print("1. Calculator")
     print("2. Tell me a joke")
-    print("3. Show Currenrt Time")
-    print("4. Exit")
+    print("3. Show Current Time")
+    print("4. To-Do List")
+    print("5. Exit")
 
 
 def calculator():
     print("Welcome to the calculator!")
     a = int(input("Enter First Number: "))
     b = int(input("Enter Second Number: "))
-    print("Addition:" , a + b)
+    print("Addition:", a + b)
     print("Subtraction:", a - b)
     print("Multiplication:", a * b)
     print("Division:", a / b if b != 0 else "Error : Divide by zero")
     print("Thank you for using the calculator!")
+
 
 def tell_joke():
     jokes = [
@@ -41,13 +44,59 @@ def tell_joke():
         "Why did the scarecrow win an award? Because he was outstanding in his field!",
         "Why don't skeletons fight each other? They don't have the guts.",
         "What do you call fake spaghetti? An impasta!",
-        "Why did the bicycle fall over? Because it was two-tired!"
+        "Why did the bicycle fall over? Because it was two-tired!",
     ]
     print(random.choice(jokes))
 
+
 def show_time():
-    now  = datetime.datetime.now().strftime("%H:%M:%S")
+    now = datetime.datetime.now().strftime("%H:%M:%S")
     print("Current Time is: ", now)
+
+
+def add_task(task):
+    with open(TASK_FILE, "a") as file:
+        file.write(task + "\n")
+    print(f"{task} Task Added successfully.")
+
+
+def show_tasks():
+    if not os.path.exists(TASK_FILE) or os.stat(TASK_FILE).st_size == 0:
+        print("No Task Found")
+        return
+    with open(TASK_FILE, "r") as file:
+        tasks = file.readlines()
+        print(tasks)
+        for i, task in enumerate(tasks, start=1):
+            print(f"{i} . {task.strip()}")
+
+
+def clear_tasks():
+    with open(TASK_FILE, "w") as file:
+        pass
+    print("All tasks cleared.")
+
+
+def todo_menu():
+    while True:
+        print("\n--- To-Do Menu ---")
+        print("1. Add Task")
+        print("2. Show Tasks")
+        print("3. Clear Tasks")
+        print("4. Back to Main Menu")
+        choice = input("Choose an option 1 - 4: ")
+
+        if choice == "1":
+            task = input("Enter a new Task: ")
+            add_task(task)
+        elif choice == "2":
+            show_tasks()
+        elif choice == "3":
+            clear_tasks()
+        elif choice == "4":
+            break
+        else:
+            print("Invalid choice, try again.")
 
 
 def run_assistant():
@@ -55,19 +104,21 @@ def run_assistant():
     while True:
         show_menu()
         choice = input("Choose an option 1 - 4: ")
-        
+
         if choice == "1":
             calculator()
         elif choice == "2":
             tell_joke()
         elif choice == "3":
             show_time()
-            
         elif choice == "4":
+            todo_menu()
+        elif choice == "5":
             print("Goodbye! Have a great day!")
             break
-        
+
         else:
             print("Invalid choice, try again.")
-            
+
+
 run_assistant()
